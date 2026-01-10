@@ -1,0 +1,109 @@
+PORTB = $6000
+PORTA = $6001
+DDRB = $6002
+DDRA = $6003
+
+E = %10000000
+RW = %01000000
+RS = %00100000
+
+        ;; top of ROM
+        .org $8000
+_start:
+        jsr init_ports
+
+        jsr init_screen
+
+        ldx #0
+
+print_loop:
+        lda message, x
+        beq _loop               ;break out of the loop if null terminator encountered
+        jsr print_char
+        inx
+        jmp print_loop
+
+_loop:
+        jmp _loop
+
+        ;; changes port a
+print_char:
+        jsr lcd_wait
+        sta PORTB
+        lda #RS                  ;turn on RS
+        sta PORTA
+
+        lda #(RS | E)            ;toggle enable and RS
+        sta PORTA
+        lda #RS                 ;un toggle enable but keep RS
+        sta PORTA
+        rts
+
+message: .asciiz "Hi lamby!"
+
+init_ports:
+        lda #$ff                ;all pints output
+        sta DDRB
+
+        lda #%11100000          ;top 3 pins to output
+        sta DDRA
+        rts
+
+        ;; sreg
+lcd_wait:
+        pha
+        lda #0                  ;set drrb to input to read busy flag
+        sta DDRB
+reread:
+        lda #RW
+        sta PORTA
+        lda #(RW | E)           ;compile-time constant eval I think
+        sta PORTA               ;toggle E flag
+        lda PORTB               ;read busy flag
+        and #%10000000          ;compare with top bit (bf)
+        bne reread
+
+        lda #RW
+        sta PORTA
+
+        lda #$ff                ;reset ddrb to output
+        sta DDRB
+        pla
+        rts
+
+
+init_screen:
+        lda #%00000001          ;clear display
+        sta PORTB
+        jsr lcd_instruction_send
+
+        lda #%00111000          ;function set (set 8-bit mode, 2 line displayt, 5x8 font)
+        sta PORTB
+        jsr lcd_instruction_send
+
+        lda #0                  ;set control pins to 0
+        sta PORTA
+        jsr lcd_instruction_send
+
+        lda #%00001111          ;display on, cur on, blink on
+        sta PORTB
+        jsr lcd_instruction_send
+
+        lda #%00000110          ;entry mode, incr, no scroll
+        sta PORTB
+        jsr lcd_instruction_send
+        rts
+
+        ;; changes a
+lcd_instruction_send:
+        jsr lcd_wait
+        lda #E                  ;toggle enable
+        sta PORTA
+        lda #0
+        sta PORTA
+        rts
+
+        ;; jump table
+        .org $FFFC
+        .word $8000
+        .word $0000
