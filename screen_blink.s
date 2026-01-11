@@ -1,16 +1,16 @@
-.defc PORTB = $6000
-.defc PORTA = $6001
-.defc DDRB = $6002
-.defc DDRA = $6003
-.defc ACR = $600B
-.defc T1CL = $6004
-.defc T1CH = $6005
-.defc IFR = $600D
-.defc IER = $600E
+PORTB = $6000
+PORTA = $6001
+DDRB = $6002
+DDRA = $6003
+ACR = $600B
+T1CL = $6004
+T1CH = $6005
+IFR = $600D
+IER = $600E
 
-.defc E = %10000000
-.defc RW = %01000000
-.defc RS = %00100000
+E = %10000000
+RW = %01000000
+RS = %00100000
 
 ;; top of ROM
 .org $8000
