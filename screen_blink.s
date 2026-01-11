@@ -13,7 +13,7 @@ RW = %01000000
 RS = %00100000
 
 ;; top of ROM
-.org $8000
+        .org $8000
 _start:
         jsr init_ports
 
@@ -22,8 +22,7 @@ _start:
 
         jsr init_screen
 
-
-        ldx #0
+        ldx #$0
 print_loop:
         lda message, x
         beq _loop               ;break out of the loop if null terminator encountered
@@ -56,7 +55,7 @@ init_ports:
         lda #$ff                ;top 3 pins port a to output
         sta DDRA
 
-        lda #0
+        lda #$0
         sta PORTA
 
         rts
@@ -144,7 +143,8 @@ _irq:
         rti
 
 ;; jump table
-.org $FFFA
-.word _nmi
-.word _start
-.word _irq
+        .org $FFFA
+        .word _nmi
+        .word _start
+        .word _irq
+        
