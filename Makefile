@@ -1,6 +1,6 @@
 DEVICE := AT28C256
 BIN_FILE := rom.bin
-SRC := screen.s
+SRC := screen_blink.s
 
 rom.bin:${SRC}
 	vasm -Fbin -dotdir -o $@ $^

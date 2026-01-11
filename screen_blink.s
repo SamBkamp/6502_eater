@@ -1,8 +1,13 @@
 PORTB = $6000
 PORTA = $6001
 DDRB = $6002
-        DDRA = $6003
-        
+DDRA = $6003
+ACR = $600B
+T1CL = $6004
+T1CH = $6005
+IFR = $600D
+IER = $600E
+
 E = %10000000
 RW = %01000000
 RS = %00100000
@@ -11,11 +16,14 @@ RS = %00100000
         .org $8000
 _start:
         jsr init_ports
-        
-        jsr init_screen
+
+        jsr init_timer        
+        cli
+
+        jsr init_screen         
+       
 
         ldx #0
-
 print_loop:
         lda message, x
         beq _loop               ;break out of the loop if null terminator encountered
@@ -39,16 +47,36 @@ print_char:
         sta PORTA
         rts
 
-message: .asciiz "Hi lamby!"
+message: .asciiz "erm.. my light                          binking..."
 
 init_ports:
         lda #$ff                ;all pints port b output
         sta DDRB
 
-        lda #%11100000          ;top 3 pins port a to output
+        lda #$ff                ;top 3 pins port a to output
         sta DDRA
-        rts
 
+        lda #0
+        sta PORTA
+        
+        rts
+        
+init_timer:
+        pha
+        lda #%01000000          ;free-run mode
+        sta ACR
+        
+        lda #$ff
+        sta T1CL
+        lda #$ff
+        sta T1CH                ;init the counters (starts count down)
+       
+        lda #%11000000          ;set/clear, timer 1 high
+        sta IER
+        
+        pla
+        rts
+        
         ;; sreg
 lcd_wait:
         pha
@@ -57,8 +85,8 @@ lcd_wait:
 reread:
         lda #RW
         sta PORTA
-        lda #(RW | E)           ;compile-time constant eval I think
-        sta PORTA               ;toggle E flag
+        lda #(E|RW)             ;compile-time constant eval I think
+        sta PORTA
         lda PORTB               ;read busy flag
         and #%10000000          ;compare with top bit (bf)
         bne reread
@@ -93,7 +121,7 @@ init_screen:
         sta PORTB
         jsr lcd_instruction_send
         rts
-        
+
         ;; changes a
 lcd_instruction_send:
         jsr lcd_wait
@@ -103,7 +131,20 @@ lcd_instruction_send:
         sta PORTA
         rts
 
+_nmi:
+        rti
+        
+_irq:
+        pha
+        lda T1CL        
+        lda #$01
+        eor PORTA
+        sta PORTA
+        pla
+        rti
+        
         ;; jump table
-        .org $FFFC
-        .word $8000
-        .word $0000
+        .org $FFFA
+        .word _nmi
+        .word _start
+        .word _irq
