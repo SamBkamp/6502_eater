@@ -1,27 +1,27 @@
-PORTB = $6000
-PORTA = $6001
-DDRB = $6002
-DDRA = $6003
-ACR = $600B
-T1CL = $6004
-T1CH = $6005
-IFR = $600D
-IER = $600E
+.defc PORTB = $6000
+.defc PORTA = $6001
+.defc DDRB = $6002
+.defc DDRA = $6003
+.defc ACR = $600B
+.defc T1CL = $6004
+.defc T1CH = $6005
+.defc IFR = $600D
+.defc IER = $600E
 
-E = %10000000
-RW = %01000000
-RS = %00100000
+.defc E = %10000000
+.defc RW = %01000000
+.defc RS = %00100000
 
-        ;; top of ROM
-        .org $8000
+;; top of ROM
+.org $8000
 _start:
         jsr init_ports
 
-        jsr init_timer        
+        jsr init_timer
         cli
 
-        jsr init_screen         
-       
+        jsr init_screen
+
 
         ldx #0
 print_loop:
@@ -34,7 +34,7 @@ print_loop:
 _loop:
         jmp _loop
 
-        ;; changes port a
+;; changes port a
 print_char:
         jsr lcd_wait
         sta PORTB
@@ -58,26 +58,26 @@ init_ports:
 
         lda #0
         sta PORTA
-        
+
         rts
-        
+
 init_timer:
         pha
         lda #%01000000          ;free-run mode
         sta ACR
-        
+
         lda #$ff
         sta T1CL
         lda #$ff
         sta T1CH                ;init the counters (starts count down)
-       
+
         lda #%11000000          ;set/clear, timer 1 high
         sta IER
-        
+
         pla
         rts
-        
-        ;; sreg
+
+;; sreg
 lcd_wait:
         pha
         lda #0                  ;set drrb to input to read busy flag
@@ -122,7 +122,7 @@ init_screen:
         jsr lcd_instruction_send
         rts
 
-        ;; changes a
+;; changes a
 lcd_instruction_send:
         jsr lcd_wait
         lda #E                  ;toggle enable
@@ -133,18 +133,18 @@ lcd_instruction_send:
 
 _nmi:
         rti
-        
+
 _irq:
         pha
-        lda T1CL        
+        lda T1CL
         lda #$01
         eor PORTA
         sta PORTA
         pla
         rti
-        
-        ;; jump table
-        .org $FFFA
-        .word _nmi
-        .word _start
-        .word _irq
+
+;; jump table
+.org $FFFA
+.word _nmi
+.word _start
+.word _irq
